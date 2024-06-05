@@ -1,30 +1,4 @@
 //Variables
-const formulario = document.querySelector("#formDemo");
-const listUsers = document.querySelector('.usersList');
-const fragment = document.createDocumentFragment();
-let objetoDatos = {};
-
-
-//EVENTOS
-//Evento del submit del formulario
-formulario.addEventListener(('submit'), (evento) => {
-    evento.preventDefault();
-    objetoDatos = {
-        nombre: formulario.name.value,
-        apellido: formulario.surname.value,
-        email: formulario.email.value,
-        mensaje: formulario.message.value,
-        url: formulario.urlImage.value,
-    };
-    console.log(objetoDatos)
-
-    createData({ ...objetoDatos });
-
-});
-
-
-
-
 // Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCw6W16ItqmffU-peo3y6rM8lwWmsZ7B8k",
@@ -39,15 +13,37 @@ firebase.initializeApp(firebaseConfig);// Inicializaar app Firebase
 
 const db = firebase.firestore();// db representa mi BBDD //inicia Firestore
 
-//Función pra guardar datos del form en Firebase
-const createData = ({ nombre, apellido, email, mensaje, url }) => {
+const formulario = document.querySelector("#formDemo");
+const listUsers = document.querySelector('.usersList');
+const fragment = document.createDocumentFragment();
+
+
+//EVENTOS
+//Evento del submit del formulario
+formulario.addEventListener('submit', evento => {
+    evento.preventDefault();
+    let objetoDatos = {
+        nombre: formulario.name.value,
+        apellido: formulario.surname.value,
+        email: formulario.email.value,
+        mensaje: formulario.message.value,
+        url: formulario.urlImage.value,
+    };
+    console.log(objetoDatos)
+
+    createData(objetoDatos);
+
+});
+
+
+//Función para guardar datos del form en Firebase
+const createData = (user) => {
 
     db.collection("users")
-        .add({ nombre, apellido, email, mensaje, url })
+        .add(user)
         .then((docRef) => {
             console.log("Document written with ID: ", docRef.id);
             //printData(nombre, apellido, email, mensaje, url)
-            objetoDatos = {};
             formulario.reset();
         })
         .catch((error) => console.error("Error adding document: ", error));
@@ -114,10 +110,17 @@ const deleteAll = () => {
 };
 
 //Función para eliminar un usuario concreto en Firebase
-const deleteOne = (id) => {
-    db.collection('users').doc(id).delete()
+const deleteOne = (name) => {
+    db.collection('users')
+        .where("nombre", "==", name)
+        .get()
+        .then(querySnapshot => {
+            querySnapshot.forEach(snapshot => {
+                snapshot.ref.delete();
+            })
+        })
         .then(() => {
-            alert(`El usuario ${id} ha sido borrado`);
+            alert(`El usuario ${name} ha sido borrado`);
             //Limpiar el DOM
             cleanUsers();
             //Read all de nuevo
